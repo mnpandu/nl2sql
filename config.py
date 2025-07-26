@@ -2,7 +2,7 @@
 import os
 
 # OpenAI API Key
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Oracle connection details
 DB_DRIVER = "oracle+oracledb"
