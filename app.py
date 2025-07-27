@@ -1,6 +1,6 @@
 import gradio as gr
 import pandas as pd
-from db_pipeline2 import NL2SQLPipeline
+from db_pipeline import NL2SQLPipeline
 
 # Initialize pipeline
 pipeline = NL2SQLPipeline()
@@ -16,9 +16,9 @@ def handle_query(user_query):
 def clear_all():
     return "", pd.DataFrame(), ""
 
-# Examples
+# Examples Prompts
 examples = [
-    ["Show all employees"],
+    ["Show all employees with department names"],
     ["List employees in Bangalore"],
     ["Who earns more than 5000"],
     ["Find all employees with salary between 4000 and 6000"],

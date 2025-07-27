@@ -77,8 +77,6 @@ class NL2SQLPipeline:
                 # fallback: find first line starting with SELECT
                 lines = [line for line in raw_output.splitlines() if line.strip().lower().startswith("select")]
                 sql_query = lines[0].strip() if lines else raw_output.strip()
-
-            print(sql_query)
             sql_query = sql_query.rstrip(";")  # ✅ remove trailing semicolon
 
             try:
