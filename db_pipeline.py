@@ -16,28 +16,8 @@ logger.setLevel(logging.INFO)
 openai.api_key = OPENAI_API_KEY
 
 class NL2SQLPipeline:
-    def __init__(self):
-        self.drivername = DB_DRIVER
-        self.db_host = DB_HOST
-        self.db_port = DB_PORT
-        self.db_name = DB_NAME
-        self.db_user = DB_USER
-        self.db_password = DB_PASSWORD
-
-    def create_engine(self):
-        # Create SQLAlchemy engine for Oracle using oracledb thin driver
-        url = URL.create(
-            drivername=self.drivername,
-            username=self.db_user,
-            password=self.db_password,
-            host=self.db_host,
-            port=self.db_port,
-            database=self.db_name
-        )
-        return sa.create_engine(url)
-
     def create_db_context(self):
-        engine = self.create_engine()
+        engine = get_engine()
         db = SQLDatabase(
             engine,
             include_tables=INCLUDE_TABLES,
@@ -51,13 +31,7 @@ class NL2SQLPipeline:
             schema_info = self.create_db_context()
 
             # Prompt for GPT
-            prompt = f"""
-            You are an Oracle SQL generator.
-            ### Schema:
-            {schema_info}
-            ### User Question:
-            {question}
-            """
+            prompt = build_prompt(schema_info, question)
 
             # Generate SQL using OpenAI
             response = openai.chat.completions.create(
@@ -65,27 +39,11 @@ class NL2SQLPipeline:
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0
             )
-
-            raw_output = response.choices[0].message.content.strip()
-
-            # ✅ Extract SQL inside the ```sql ... ``` block
-            if "```sql" in raw_output:
-                sql_query = raw_output.split("```sql")[1].split("```")[0].strip()
-            elif "```" in raw_output:
-                sql_query = raw_output.split("```")[1].strip()
-            else:
-                # fallback: find first line starting with SELECT
-                lines = [line for line in raw_output.splitlines() if line.strip().lower().startswith("select")]
-                sql_query = lines[0].strip() if lines else raw_output.strip()
-            sql_query = sql_query.rstrip(";")  # ✅ remove trailing semicolon
-
+            raw_output = response.choices[0].message.content.strip()           
+            sql_query=clean_sql(raw_output)
             try:
                 # Execute SQL on Oracle
-                conn = oracledb.connect(
-                    user=self.db_user,
-                    password=self.db_password,
-                    dsn=f"{self.db_host}:{self.db_port}/{self.db_name}"
-                )
+                conn=get_oracle_connection()
                 cursor = conn.cursor()
                 cursor.execute(sql_query)
                 cols = [c[0] for c in cursor.description]
