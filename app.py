@@ -18,38 +18,33 @@ def clear_all():
 
 # Examples Prompts
 examples = [
-    ["Show all employees with department names"],
-    ["List employees in Bangalore"],
-    ["Who earns more than 5000"],
-    ["Find all employees with salary between 4000 and 6000"],
-    ["Show employees in Bangalore earning above 5000"],
-    ["List employees where city is Chennai and salary is less than 7000"],
-    ["Which employees are in the HR department"],
-    ["Find employees in Engineering with salary greater than 6000"],
-    ["Show employees with their department names"],
-    ["List all employees and their departments in Bangalore"],
-    ["Which department does Raj work in"],
-    ["Show average salary for each department"],
-    ["What is the highest salary"],
-    ["What is the average salary in Engineering"],
-    ["How many employees are in each city"],
-    ["Count number of employees in Bangalore"],
-    ["List employees ordered by salary descending"],
-    ["Show top 3 highest paid employees"],
-    ["Which employee has the lowest salary"],
-    ["Find all employees with salary greater than the average salary"],
-    ["Which city has the highest number of employees"],
-    ["Show employees in Bangalore earning more than 5000 along with their department names"],
-    ["Give me the staff working in Bangalore"],
-    ["Employees making over 5K in Bangalore"],
-    ["All HR employees in Mumbai"],
-    ["Who are the top earners in Engineering"],
-    ["Show me everyone earning more than 5000 with their city and department"],
-    ["Total salary cost per department"],
-    ["How many employees are there in the company"],
-    ["Average salary by city"],
-    ["Departments with employees in Bangalore"]
+    ["Show me all claims with their billed amount, allowed amount, and paid amount"],
+    ["List all claims grouped by Claim Status (Paid, Denied, Under Review)"],
+    ["Which claims are still in Pending AR Status"],
+    ["Show the total billed vs. paid amount for all claims in the last 3 months"],
+    ["Find all claims that are Partially Paid in Outcome"],
+    ["List all claims submitted by a specific Provider ID"],
+    ["Show providers with the highest number of denied claims"],
+    ["Which providers have the largest billed amounts overall"],
+    ["Find claims from providers that required Follow-up = Yes"],
+    ["Compare allowed vs. paid amounts per provider"],
+    ["Show all claims linked to a specific Patient ID"],
+    ["Find patients with multiple denied claims"],
+    ["Show claims where patients are on Self-Pay insurance type"],
+    ["Which patients had the highest out-of-pocket difference (Billed – Paid)"],
+    ["Show all claims per patient in a given date range"],
+    ["Show claims submitted in August 2024"],
+    ["Compare claims from Q2 vs. Q3 2024 by claim status"],
+    ["List the top 10 highest billed claims in July 2024"],
+    ["Show trend of paid claims month by month"],
+    ["Find claims where service date was more than 90 days ago but still unresolved in AR"],
+    ["Show claims where Paid Amount < 50% of Billed Amount"],
+    ["Find claims denied due to 'Authorization not obtained'"],
+    ["Show claims where Reason Code = Duplicate claim"],
+    ["Identify claims with Follow-up Required = Yes and status = Denied"],
+    ["Calculate the average reimbursement rate (Paid ÷ Allowed)"]
 ]
+
 
 with gr.Blocks(css="""
 #output-container {
@@ -64,7 +59,7 @@ with gr.Blocks(css="""
     text-align: center;
 }
 """) as iface:
-    gr.Markdown("## 🧠 NL2SQL Chatbot (Oracle)")
+    gr.Markdown("## 🧠 NL2SQL Chatbot (PostGreSQL)")
     gr.Markdown("Ask natural language questions and get SQL + results from Oracle XE.")
 
     with gr.Row():
@@ -85,4 +80,4 @@ with gr.Blocks(css="""
     clear_btn.click(clear_all, outputs=[sql_box, result_df, question])
 
 if __name__ == "__main__":
-    iface.launch(share=True,server_name="0.0.0.0", server_port=7860)
+    iface.launch(share=True,server_name="localhost", server_port=7860)

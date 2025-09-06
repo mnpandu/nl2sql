@@ -5,7 +5,7 @@ import logging
 import oracledb
 from langchain_community.utilities import SQLDatabase
 from config import *
-from db_utils import get_engine, get_oracle_connection
+from db_utils import get_engine, get_db_connection
 from sql_utils import build_prompt, clean_sql
 from sqlalchemy.engine import URL
 import sqlalchemy as sa
@@ -22,7 +22,7 @@ class NL2SQLPipeline:
             engine,
             include_tables=INCLUDE_TABLES,
             sample_rows_in_table_info=SAMPLE_ROWS,
-            schema="C##MYAI"
+            schema=SCHEMA
         )
         return db.get_context()["table_info"]
 
@@ -42,8 +42,8 @@ class NL2SQLPipeline:
             raw_output = response.choices[0].message.content.strip()           
             sql_query=clean_sql(raw_output)
             try:
-                # Execute SQL on Oracle
-                conn=get_oracle_connection()
+                # Execute SQL on PostGreSQL
+                conn=get_db_connection()
                 cursor = conn.cursor()
                 cursor.execute(sql_query)
                 cols = [c[0] for c in cursor.description]

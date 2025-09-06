@@ -1,7 +1,7 @@
 # sql_utils.py
 def build_prompt(schema_info, question):
     return f"""
-            You are an Oracle SQL generator.
+            You are an PostGreSQL SQL generator.
             ### Schema:
             {schema_info}
             ### User Question:
