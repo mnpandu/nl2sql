@@ -1,0 +1,55 @@
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileOutputStream;
+import java.util.Arrays;
+import java.util.List;
+
+public class EmployeeExcelCreator {
+
+    public static void main(String[] args) {
+        try (Workbook workbook = new XSSFWorkbook()) {
+
+            // Create 3 Employee objects
+            List<Employee> employees = Arrays.asList(
+                    new Employee(101, "Ravi Kumar", 50000, "Hyderabad"),
+                    new Employee(102, "Anita Sharma", 62000, "Mumbai"),
+                    new Employee(103, "Suresh Patel", 55000, "Ahmedabad")
+            );
+
+            // Create one sheet per employee
+            for (Employee emp : employees) {
+                Sheet sheet = workbook.createSheet("Emp_" + emp.getEmpId());
+
+                // Header Row
+                Row header = sheet.createRow(0);
+                header.createCell(0).setCellValue("Emp ID");
+                header.createCell(1).setCellValue("Name");
+                header.createCell(2).setCellValue("Salary");
+                header.createCell(3).setCellValue("Address");
+
+                // Data Row
+                Row data = sheet.createRow(1);
+                data.createCell(0).setCellValue(emp.getEmpId());
+                data.createCell(1).setCellValue(emp.getEmpName());
+                data.createCell(2).setCellValue(emp.getSalary());
+                data.createCell(3).setCellValue(emp.getAddress());
+
+                // Auto-sizing columns
+                for (int i = 0; i < 4; i++) {
+                    sheet.autoSizeColumn(i);
+                }
+            }
+
+            // Write to file
+            try (FileOutputStream fos = new FileOutputStream("Employees.xlsx")) {
+                workbook.write(fos);
+            }
+
+            System.out.println("Excel file 'Employees.xlsx' created successfully!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
