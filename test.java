@@ -1,70 +1,95 @@
+import javax.persistence.Query;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.*;
 
-public class NativeQueryMapper {
+public class SmartNativeQueryMapper {
 
-    public static <T> List<T> map(Object[] columns, List<Object[]> rows, Class<T> clazz) {
-        List<T> results = new ArrayList<>();
+    public static <T> List<T> mapToVO(Query query, Class<T> clazz) {
+        // Get column names from result metadata
+        List<String> columnNames = extractColumnNames(query);
 
-        Field[] fields = clazz.getDeclaredFields();
-        Map<String, Field> fieldMap = new HashMap<>();
+        // Execute query
+        List<Object[]> rows = query.getResultList();
 
-        // Build field-name → Field lookup table
-        for (Field f : fields) {
-            f.setAccessible(true);
-            fieldMap.put(f.getName().toLowerCase(), f);
+        // Build column index map
+        Map<String, Integer> indexMap = buildIndexMap(columnNames);
+
+        return convertRows(rows, indexMap, clazz);
+    }
+
+    // Extracts column names from SQL query using Hibernate metadata
+    private static List<String> extractColumnNames(Query query) {
+        org.hibernate.query.NativeQuery nativeQuery =
+                query.unwrap(org.hibernate.query.NativeQuery.class);
+
+        List<String> columnNames = new ArrayList<>();
+        for (org.hibernate.query.NativeQuery.ReturnableReturn returnable
+                : nativeQuery.getReturnTypes()) {
+            columnNames.add(returnable.getName().toLowerCase());
         }
+        return columnNames;
+    }
+
+    private static Map<String, Integer> buildIndexMap(List<String> columnNames) {
+        Map<String, Integer> map = new HashMap<>();
+        for (int i = 0; i < columnNames.size(); i++) {
+            map.put(columnNames.get(i).toLowerCase(), i);
+        }
+        return map;
+    }
+
+    private static <T> List<T> convertRows(List<Object[]> rows,
+                                           Map<String, Integer> indexMap,
+                                           Class<T> clazz) {
+
+        List<T> result = new ArrayList<>();
 
         for (Object[] row : rows) {
             try {
-                T instance = clazz.getDeclaredConstructor().newInstance();
+                T obj = clazz.getDeclaredConstructor().newInstance();
 
-                for (int i = 0; i < columns.length; i++) {
+                for (Field field : clazz.getDeclaredFields()) {
+                    field.setAccessible(true);
 
-                    String colName = columns[i].toString().toLowerCase();  // from SQL alias
-                    Object value = row[i];
+                    String fieldName = field.getName().toLowerCase();
 
-                    if (value == null) continue;
+                    if (!indexMap.containsKey(fieldName)) continue;
 
-                    if (fieldMap.containsKey(colName)) {
-                        Field field = fieldMap.get(colName);
+                    int idx = indexMap.get(fieldName);
+                    Object val = row[idx];
 
-                        // Convert numeric types safely
-                        Object casted = convertValue(value, field.getType());
-
-                        field.set(instance, casted);
+                    if (val != null) {
+                        field.set(obj, convert(val, field.getType()));
                     }
                 }
 
-                results.add(instance);
+                result.add(obj);
+
             } catch (Exception e) {
-                throw new RuntimeException("Failed mapping for class " + clazz.getName(), e);
+                throw new RuntimeException("Failed mapping row", e);
             }
         }
-        return results;
+
+        return result;
     }
 
-    private static Object convertValue(Object value, Class<?> targetType) {
+    private static Object convert(Object val, Class<?> targetType) {
 
-        if (value == null) return null;
+        if (val == null) return null;
 
-        if (targetType.equals(Long.class)) {
-            return (value instanceof BigDecimal)
-                    ? ((BigDecimal) value).longValue()
-                    : Long.valueOf(value.toString());
-        }
+        if (targetType.equals(Long.class))
+            return ((Number) val).longValue();
 
-        if (targetType.equals(Integer.class)) {
-            return (value instanceof BigDecimal)
-                    ? ((BigDecimal) value).intValue()
-                    : Integer.valueOf(value.toString());
-        }
+        if (targetType.equals(Integer.class))
+            return ((Number) val).intValue();
 
-        if (targetType.equals(Double.class)) {
-            return Double.valueOf(value.toString());
-        }
+        if (targetType.equals(Double.class))
+            return Double.valueOf(val.toString());
 
-        return value.toString(); // default String
+        if (targetType.equals(String.class))
+            return val.toString();
+
+        return val;
     }
 }
